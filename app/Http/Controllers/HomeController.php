@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use WebSocketDashboard\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
+use WebSocketDashboard\Events\UserRegistered;
 
 class HomeController extends Controller
 {
@@ -26,7 +27,7 @@ class HomeController extends Controller
      */
     public function index()
     {
-        return view('home', ['users' => User::all()->except(Auth::id())]);
+        return view('home', ['users' => User::orderBy('id', 'desc')->get()->except(Auth::id())]);
     }
 
     public function storeUser(Request $request, User $user){
@@ -38,6 +39,8 @@ class HomeController extends Controller
 
         if($rules->fails()) return response()->json(['errors' => $rules->errors()]);
         
-        $user->create($request->only(['name', 'email', 'password']));
+        $user = $user->create($request->only(['name', 'email', 'password']));
+
+        event(new UserRegistered($user));
     }
 }
